@@ -1,5 +1,6 @@
 {
     "name": "essmaxl",
+    "publisher": "vscode-essbase",
     "displayName": "Essbase MaxL Language",
     "description": "Oracle Hyperion MaxL Language",
     "version": "0.0.3",
