@@ -1,8 +1,21 @@
 {
-    "name": "MaxL",
-    "displayName": "MaxL",
+    "name": "essmaxl",
+    "displayName": "Essbase MaxL Language",
     "description": "Oracle Hyperion MaxL Language",
-    "version": "0.0.1",
+    "version": "0.0.3",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/phoch00/VSC-Language-MaxL-2022"
+    },
+    "license": "SEE LICENSE IN LICENSE.md",
+    "bugs": {
+        "url": "https://github.com/phoch00/VSC-Language-EssCalc-2022/issues"
+    },
+    "icon": "images/cubelogo.png",
+    "galleryBanner": {
+        "color": "#6A92B1",
+        "theme": "dark"
+    },
     "engines": {
         "vscode": "^1.45.0"
     },
@@ -12,14 +25,39 @@
     "contributes": {
         "languages": [{
             "id": "mxl",
-            "aliases": ["MaxL", "mxl"],
-            "extensions": [".mxl"],
+            "aliases": ["MaxL", "mxl", "msh"],
+            "extensions": [".mxl", ".msh"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{
             "language": "mxl",
             "scopeName": "source.mxl",
             "path": "./syntaxes/mxl.tmLanguage.json"
-        }]
+        }],
+        "snippets": [{
+            "language": "mxl",
+            "path": "./snippets/mxl.snippets.json"
+        }],
+        "configuration": {
+            "type": "object",
+            "title": "Essbase MaxL Script Language",
+            "properties": {
+                "csc.maxNumberOfProblems": {
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                }
+            }
+        },
+        "configurationDefaults": {
+            "[mxl]": {
+                "editor.tabSize": 4,
+                "editor.insertSpaces": false,
+                "editor.detectIndentation": true,
+                "editor.trimAutoWhitespace": true,
+                "editor.autoClosingBrackets": "always"
+            }
+        }
+
     }
 }

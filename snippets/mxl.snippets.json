@@ -1,0 +1,54 @@
+{
+    "Login Statemnet": {
+        "prefix" : "login",
+        "body": [
+            "login ${username} ${password} on ${servername};",
+            "$0"
+
+        ],
+        "description": "Login Commands"
+    },
+
+"Spool Statement": {
+    "prefix" : "spool",
+    "body": [
+        "spool on to ${logpath};",
+        "$0"
+    ],
+    "description": "Spool Commands"
+},
+
+"New Script" : {
+    "prefix" : "newmxl",
+    "body": [
+
+            "/* ",
+            "Script Name: \t",
+            "Written By: \t",
+            "On: \t",
+            "Purpose: \t",
+            "\n",
+            "Update Log: \t",
+            "\n",
+            "*/",
+            "\n",
+            "\n",
+            "spool on to ${logpath};",
+            "\n",
+            "login ${username} ${password} on ${servername};",
+            "\n",
+            "/* Script Body Goes Here */",
+            "\n",
+            "spool off;",
+            "logout;",
+            "exit;",
+            "$0"
+
+    ],
+    "description": "New MaxL Script"
+
+
+}
+
+
+}
