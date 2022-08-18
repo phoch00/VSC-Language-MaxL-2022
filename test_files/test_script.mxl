@@ -41,7 +41,6 @@ alter database 'CPorp'.'Salary' set variable 'PlanEntUp' '"Tot Corp"';
 /* disable connections and log out users */
 alter application 'Corp' disable connects;
 
-/* Important - Look up syntax here */
 alter system kill request all on Corp;
 alter system logout session all force on Corp;
 
@@ -59,7 +58,6 @@ execute calculation 'fpa'.'fees'.'C_Asd';
 /* export the databases - Fees and FPA */
 export database 'Corp'.'Corp' data to data_file 'D:/Ent/Hyperion/Essbase/App/Fpa_Exp.txt';
 export database 'Corp'.'Salary' data to data_file 'D:/Ent/Hyperion/Essbase/App/Fee_Exp.txt';
-
 
 alter application 'Corp' enable startup;
 alter application 'Corp' enable connects;
