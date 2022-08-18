@@ -1,0 +1,685 @@
+Set EssFolder="/u01/app/apphyp/Oracle/Middleware/user_projects/ESSBASE0/EssbaseServer/essbaseserver1/automation";
+
+
+/* Setup Log and Error file and Log into Server and Application */
+
+Spool stdout on to "$EssFolder/logs/CORPPLAN/LoadActualData.log";
+Spool stderr on to "$EssFolder/error/CORPPLAN/LoadActualData.err";
+
+login admin password on myserver;
+
+/*First test a load to insure that the ActualData.txt file is in the folder - if there is not file then error will kick out*/
+import database CORPPLAN.CORPPLAN data from data_file "$EssFolder/data/CORPPLAN/ActualsData.txt" using server rules_file 'THERUL' on error write to "$EssFolder/error/CORPPLAN/LoadActualData.txt";
+
+/*Now clear out actuals and load in the ActualsData.txt file*/
+execute calculation CORPPLAN.CORPPLAN.ClrAct;
+import database CORPPLAN.CORPPLAN data from data_file "$EssFolder/data/CORPPLAN/ActualsData.txt" using server rules_file 'LRAAejt' on error write to "$EssFolder/error/CORPPLAN/LoadActualData.txt";
+
+
+execute calculation CORPPLAN.CORPPLAN.ACTCOPY;
+/* execute calculation CORPPLAN.CORPPLAN.ACTSPRDA; */
+execute calculation CORPPLAN.CORPPLAN.AGGALL;
+
+
+logout;
+exit;
+
+
+/* login with username password and server $1 $2 and $3 need to be provided on invocation or the script will fail */
+/* Syntax to launch this script is essmsh.exe dummyuser password nameofserver */
+
+login $1 $2 on $3;
+
+/* Spool the results of the "stop" process to the logs directory */
+
+spool on to 'F:\ent\hyperion\Essbackup\HypData\Logs\MStop\MStopC.log';
+
+/* Set all of the Variables to LMSSC */
+alter database 'Corp'.'Corp' set variable 'PlanEntUp' '"Tot Corp"';
+alter database 'CPorp'.'Salary' set variable 'PlanEntUp' '"Tot Corp"';
+
+/* disable connections and log out users */
+alter application 'Corp' disable connects;
+
+/* Important - Look up syntax here */
+alter system kill request all on Corp;
+alter system logout session all force on Corp;
+
+/* Execute the Night Calcs in Proper Sequence */
+
+execute calculation 'CashDtl'.'CashDtl'.'C_Asd';
+
+execute calculation 'fpa'.'fpa'.'N_BalSUp';
+
+/* Aggregate all 3 Databases */
+execute calculation 'fpa'.'fpa'.'C_Asd';
+execute calculation 'fpa'.'fees'.'C_Asd';
+
+
+/* export the databases - Fees and FPA */
+export database 'Corp'.'Corp' data to data_file 'D:/Ent/Hyperion/Essbase/App/Fpa_Exp.txt';
+export database 'Corp'.'Salary' data to data_file 'D:/Ent/Hyperion/Essbase/App/Fee_Exp.txt';
+
+
+alter application 'Corp' enable startup;
+alter application 'Corp' enable connects;
+alter application 'Corp' enable commands;
+alter application 'Corp' enable updates;
+alter application 'Corp' enable security;
+
+
+/* All done! */
+spool off;
+logout;
+exit;
+
+                                                          */
+/* DEFRAGMENT THE Working DATABASE.                                              */
+alter database Working.Working
+        force restructure;
+/*                                                                               */
+/* EXPORT LEVEL-0 DATA FROM Working.                                             */
+export database Working.Working
+        level0 data in columns
+        to server data_file
+        "$ARBORPATH\\app\\Profit\\Profit\\export1.txt",
+        "$ARBORPATH\\app\\Profit\\Profit\\export2.txt",
+        "$ARBORPATH\\app\\Profit\\Profit\\export3.txt";
+/*                                                                               */
+/* CLEAR DATA FROM Profit.                                                       */
+alter database Profit.Profit
+        reset data;
+/*                                                                               */
+/* LOAD DATA INTO Profit.                                                        */
+alter database Profit.Profit
+        initialize load_buffer with buffer_id 1;
+import database Profit.Profit data
+        from server text data_file 'export1.txt'
+        using server rules_file '\\Working\\Working\\LoadData.rul'
+        to load_buffer with buffer_id 1
+        on error append to "$ARBORPATH\\Load.err";
+import database Profit.Profit data
+        from server text data_file 'export2.txt'
+        using server rules_file '\\Working\\Working\\LoadData.rul'
+        to load_buffer with buffer_id 1
+        on error append to "$ARBORPATH\\Load.err";
+import database Profit.Profit data
+        from server text data_file 'export3.txt'
+        using server rules_file '\\Working\\Working\\LoadData.rul'
+        to load_buffer with buffer_id 1
+        on error append to "$ARBORPATH\\Load.err";
+import database Profit.Profit data
+        from load_buffer with buffer_id 1;
+/*                                                                               */
+/* ENABLE QUERY TRACKING ON Profit.                                              */
+alter database Profit.Profit
+        enable query_tracking;
+/*                                                                               */
+/* RUN Usage REPORT ON Profit.                                                   */
+export database Profit.Profit
+        using report_file "$ARBORPATH\\app\\Working\\Working\\Usage.rep"
+        to data_file "$ARBORPATH\\temp.txt";
+/*                                                                               */
+/* EXECUTE AGGREGATION PROCESS ON Profit.                                        */
+execute aggregate process
+        on database Profit.Profit
+        based on query_data;
+/*                                                                               */
+/* DISABLE QUERY TRACKING ON Profit.                                             */
+alter database Profit.Profit
+        disable query_tracking;
+/*                                                                               */
+/*                                                                               */
+/* LOG OFF FROM THE ESSBASE SESSION.                                             */
+logout;
+/*                                                                               */
+/* END LOGGING.                                                                  */
+spool off;
+
+
+/* Initialize Variable for Error Conditions */
+
+SET ERRLVL = 0;
+
+/* Login */
+login $1 $2 on $3;
+
+iferror 'loginerror';
+
+spool on to "D:/Data_Files/Automation/Logs/process.log";
+
+/* Make sure app is running */
+
+alter application COOKIE load database MONSTER;
+
+/* Perform outline compaction */
+
+alter database COOKIE.MONSTER compact outline;
+
+/* clear aggregate data and base data */
+
+alter database COOKIE.MONSTER clear aggregates;
+
+alter database COOKIE.MONSTER reset data;
+
+
+/* Begin dim build process */
+
+import database COOKIE.MONSTER dimensions connect as 'finance_essbase_robot' identified by 'eK7dbtyqtc' using server rules_file 's_Age',  
+connect as 'finance_essbase_robot' identified by 'eK7dbtyqtc' using server rules_file 's_Adv1',  
+connect as 'finance_essbase_robot' identified by 'eK7dbtyqtc' using server rules_file 's_Adv2'
+on error append to 'D:/data_files/Automation/Logs/dimbuilderr.txt';
+iferror 'dimbuilderr';
+
+goto 'dataload';
+
+define label 'dimbuilderr';
+SET ERRLVL=2;
+goto 'dataload';
+
+define label 'dataload';
+
+/* Load data to cube */
+
+alter database COOKIE.MONSTER initialize load_buffer with buffer_id 99;
+iferror 'dataerror';
+import database COOKIE.MONSTER data connect as 'finance_essbase_robot' identified by 'eK7dbtyqtc' using server rules_file 's_Data15' to load_buffer with buffer_id 99 on error write to 'D:/data_files/Automation/Logs/dataload15err.txt';
+iferror 'dataerror';
+import database COOKIE.MONSTER data connect as 'finance_essbase_robot' identified by 'eK7dbtyqtc' using server rules_file 's_Data16' to load_buffer with buffer_id 99 on error write to 'D:/data_files/Automation/Logs/dataload16err.txt';
+iferror 'dataerror';
+import database COOKIE.MONSTER data connect as 'finance_essbase_robot' identified by 'eK7dbtyqtc' using server rules_file 's_Data17' to load_buffer with buffer_id 99 on error write to 'D:/data_files/Automation/Logs/dataload17err.txt';
+iferror 'dataerror';
+import database COOKIE.MONSTER data from data_file 'D:/Data_Files/LOAD_GAAP_REV_EB.csv' using server rules_file 'D_GaapEB' to load_buffer with buffer_id 99 on error write to 'D:/data_files/Automation/Logs/dataloadEBerr.txt';
+iferror 'dataerror';
+import database COOKIE.MONSTER data from data_file 'D:/Data_Files/LOAD_REBATES.csv' using server rules_file 'D_REBATE' to load_buffer with buffer_id 99 on error write to 'D:/data_files/Automation/Logs/dataloadRebateErr.txt';
+iferror 'dataerror';
+import database COOKIE.MONSTER data from load_buffer with buffer_id 99;
+iferror 'dataerror';
+
+goto 'aggprocess';
+
+define label 'dataerror';
+import database COOKIE.MONSTER data from load_buffer with buffer_id 99;
+SET ERRLVL=3;
+goto 'aggprocess';
+
+define label 'aggprocess';
+
+/* Aggregate Database */
+
+execute aggregate process on database COOKIE.MONSTER;
+iferror 'AggErr';
+
+goto 'finished';
+
+Define label 'AggErr';
+SET ERRLVL=4;
+goto 'finished';
+
+define label 'finished';
+logout;
+spool off;
+exit $ERRLVL;
+
+/* Error Conditions */
+
+define label 'loginerror';
+spool off;
+exit 1;
+
+
+
+/* Created by Paul Hoch of Hyperion Solutions for Lockheed Martin Space Systems on July 7, 2005 */
+
+/* Recycle the MStop log history */
+shell "del F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop5.log MStop6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop4.log MStop5.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop3.log MStop4.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop2.log MStop3.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop1.log MStop2.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStopC.log MStop1.log";
+
+/* login with username password and server $1 $2 and $3 need to be provided on invocation or the script will fail */
+/* Syntax to launch this script is essmsh.exe dummyuser password nameofserver */
+
+login $1 $2 on $3;
+
+/* Spool the results of the "stop" process to the logs directory */
+
+spool on to 'D:\ent\hyperion\Essbackup\HypData\Logs\MStop\MStopC.log';
+
+/* disable connections and log out users */
+alter application 'FPA' disable connects;
+alter system logout session all force;
+alter system kill request all;
+alter system load application 'FPA';
+alter application 'FPA' load database 'FPA';
+alter application 'FPA' load database 'Fees';
+
+/* Calculate the Agg Sparse Dims - FPA*/
+
+execute calculation fpa.fpa.c_asd;
+
+/* Calculate the Agg Sparse Dims - FEE*/
+
+execute calculation fpa.fees.c_asd;
+
+/* export the databases - Fees and FPA */
+
+export database fpa.fpa data to data_file 'D:/Ent/Hyperion/Essbase/App/Fpa_Exp.txt';
+export database fpa.fees data to data_file 'D:/Ent/Hyperion/Essbase/App/Fee_Exp.txt';
+
+/* Put a comment in the application description indicating it is stopped */
+alter application 'FPA' comment 'FPA-Stop';
+alter application 'FPA' disable startup;
+alter application 'FPA' disable connects;
+alter application 'FPA' disable commands;
+alter application 'FPA' disable updates;
+alter system unload application 'FPA';
+
+alter application 'CashDtl' disable connects;
+alter system logout session all;
+alter system load application 'CashDtl';
+alter application 'CashDtl' load database 'CashDtl';
+
+/* Calculate the Agg Sparse Dims - CASH */
+
+execute calculation cashdtl.cashdtl.c_asd;
+
+/* export the databases - Fees and FPA */
+
+export database CashDtl.CashDtl data to data_file 'D:/Ent/Hyperion/Essbase/App/Cas_Exp.txt';
+
+/* Put a comment in the application description indicating it is stopped */
+alter application 'CashDtl' comment 'Cash-Stop';
+alter application 'CashDtl' disable startup;
+alter application 'CashDtl' disable connects;
+alter application 'CashDtl' disable commands;
+alter application 'CashDtl' disable updates;
+alter system unload application 'CashDtl';
+
+
+/* stop the Essbase server */
+alter system shutdown;
+logout;
+spool off;
+
+/* Recycle the Essbase OLAP Server (Svr) backup directories */
+
+/* rmdir /S /Q removes all files and the directory quietly - doesn't prompt to continue */
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu5 Svr_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu4 Svr_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu3 Svr_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu2 Svr_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu1 Svr_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC Svr_bu1";
+/* make a new current directory */
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC";
+
+/* Repeat the following for each App - DB as necessary - create the dirs first */
+
+/* Recycle the FPA (FPA_) backup directories */
+
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu5 FPA_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu4 FPA_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu3 FPA_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu2 FPA_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu1 FPA_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC FPA_bu1";
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC";
+
+
+/*  Copy Outline, Rules, Calc Scripts, Report Scripts, Excel Files, Text Files, Globals, and the Application Log for FPA - FPA */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.DB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.DBB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.ESM F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.TCT F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\fpa.IND F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.otl F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.rul F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.csc F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.rep F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.xls F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "move D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\*.log F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA_Exp.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+
+/* Recycle the FEE (FEE_) backup directories */
+
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu5 FEE_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu4 FEE_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu3 FEE_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu2 FEE_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu1 FEE_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC FEE_bu1";
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC";
+
+
+/*  Copy Outline, Rules, Calc Scripts, Report Scripts, Excel Files, Text Files, Globals, and the Application Log for FPA - FPA */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.DB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.DBB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.ESM F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.TCT F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\fees.IND F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.otl F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.rul F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.csc F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.rep F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.xls F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FEE_Exp.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+
+/* Recycle the Cash (CAS_) backup directories */
+
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu5 CAS_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu4 CAS_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu3 CAS_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu2 CAS_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu1 CAS_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC CAS_bu1";
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC";
+
+
+/*  Copy Outline, Rules, Calc Scripts, Report Scripts, Excel Files, Text Files, Globals, and the Application Log for FPA - FPA */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.DB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.DBB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.ESM F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.TCT F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\CashDtl.IND F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.otl F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.rul F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.csc F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.rep F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.xls F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "move D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\*.log F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CAS_Exp.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+
+
+/*  Copy the Server Security Files (.sec and .bak), Essbase Config file, and Server Log */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\Bin\\*.sec F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\Bin\\*.bak F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\Bin\\*.cfg F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\*.*";
+shell "move D:\\Ent\\Hyperion\\Essbase\\Essbase.log F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\";
+
+/* Recycle Startup Logs */
+shell "del F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart5.log MStart6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart4.log MStart5.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart3.log MStart4.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart2.log MStart3.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart1.log MStart2.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStartC.log MStart1.log";
+
+/* Start the Essbase service - Note: Essbase must be installed as a service */
+shell "Net Start EssbaseService";
+
+login $1 $2 on $3;
+/* output start up info to log */
+spool on to 'D:\Ent\Hyperion\EssBackup\HypData\Logs\MStart\MStartC.log';
+
+/* Re-enable connects and commands to FPA */
+alter application 'FPA' comment 'FPA-Start';
+alter application 'FPA' enable startup;
+alter application 'FPA' enable connects;
+alter application 'FPA' enable commands;
+alter application 'FPA' enable updates;
+alter application 'FPA' enable security;
+
+/* Re-enable connects and commands to Cash */
+alter application 'CashDtl' comment 'Cash-Start';
+alter application 'CashDtl' enable startup;
+alter application 'CashDtl' enable connects;
+alter application 'CashDtl' enable commands;
+alter application 'CashDtl' enable updates;
+alter application 'CashDtl' enable security;
+
+/* All done! */
+spool off;
+logout;
+exit;
+
+
+/* Created by Paul Hoch of Hyperion Solutions for Lockheed Martin Space Systems on July 7, 2005 */
+
+/* Recycle the MStop log history */
+shell "del F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop5.log MStop6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop4.log MStop5.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop3.log MStop4.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop2.log MStop3.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStop1.log MStop2.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStop\\MStopC.log MStop1.log";
+
+/* login with username password and server $1 $2 and $3 need to be provided on invocation or the script will fail */
+/* Syntax to launch this script is essmsh.exe dummyuser password nameofserver */
+
+login $1 $2 on $3;
+
+/* Spool the results of the "stop" process to the logs directory */
+
+spool on to 'F:\ent\hyperion\Essbackup\HypData\Logs\MStop\MStopC.log';
+
+/* Set all of the Variables to LMSSC */
+alter database 'FPA'.'FPA' set variable 'PlanEntUp' '"Lockheed Martin Space Systems"';
+alter database 'FPA'.'Fees' set variable 'PlanEntUp' '"Lockheed Martin Space Systems"';
+alter database 'CashDtl'.'CashDtl' set variable 'PlanEntUp' '"Lockheed Martin Space Systems"';
+
+/* disable connections and log out users */
+alter application 'FPA' disable connects;
+alter application 'CashDtl' disable connects;
+alter application 'Cash_NTP' disable connects;
+alter system kill request all;
+alter system logout session all force;
+
+/* Execute the Night Calcs in Proper Sequence */
+execute calculation 'fpa'.'fpa'.'N_WIPUP';
+execute calculation 'fpa'.'fees'.'N_FEESUP';
+execute calculation 'fpa'.'fpa'.'N_CSRUP';
+execute calculation 'fpa'.'fpa'.'N_AlgoUp';
+execute calculation 'fpa'.'fees'.'N_FeesUp';
+execute calculation 'fpa'.'fpa'.'N_AlgoUp';
+execute calculation 'CashDtl'.'CashDtl'.'N_CashUp';
+
+execute calculation 'CashDtl'.'CashDtl'.'C_Asd';
+
+export database 'CashDtl'.'CashDtl' data to data_file 'D:/Ent/Hyperion/Essbase/App/Cas_Exp.txt';
+
+/* Prepare the staging database */
+
+/* Unload the app to allow outline copy */
+alter system unload application 'Cash_NTP';
+
+/* Copy the Outline File Over */
+shell "copy $ARBORPATH\\App\\CashDtl\\CashDtl\\CashDtl.otl $ARBORPATH\\App\\Cash_NTP\\CashDtl\\*.*";
+
+/* Copy over the export from Above */
+shell "copy $ARBORPATH\\App\\Cas_Exp.txt $ARBORPATH\\App\\Cash_NTP\\CashDtl\\*.*";
+
+/* Reload App and Db - should read latest copied otl */
+
+alter system load application 'Cash_NTP';
+alter application 'Cash_NTP' load database 'CashDtl';
+
+/* Clear out any existing Data */
+alter database 'Cash_NTP'.'CashDtl' reset;
+
+/* Set Time periods to Sparse */
+import database 'Cash_NTP'.'CashDtl' dimensions from server text data_file 'Bld_Tp' using server rules_file 'Bld_Tp' on error write to 'D:/Ent/Hyperion/Essbase/App/CashDtl/CashDtl/DimErr.txt';
+
+/* Load up the export file */
+import database 'Cash_NTP'.'CashDtl' data from server text data_file 'Cas_Exp.txt' on error write to 'D:/Ent/Hyperion/Essbase/App/CashDtl/CashDtl/DLErr.txt';;
+
+/* Back to your usually scheduled programming */
+
+execute calculation 'fpa'.'fpa'.'N_BalSUp';
+
+/* Aggregate all 3 Databases */
+execute calculation 'fpa'.'fpa'.'C_Asd';
+execute calculation 'fpa'.'fees'.'C_Asd';
+
+
+/* export the databases - Fees and FPA */
+export database 'fpa'.'fpa' data to data_file 'D:/Ent/Hyperion/Essbase/App/Fpa_Exp.txt';
+export database 'fpa'.'fees' data to data_file 'D:/Ent/Hyperion/Essbase/App/Fee_Exp.txt';
+
+
+/* Put a comment in the application description indicating it is stopped */
+alter application 'FPA' comment 'FPA-Stop';
+alter application 'FPA' disable startup;
+alter application 'FPA' disable commands;
+alter application 'FPA' disable updates;
+alter system unload application 'FPA';
+
+/* Put a comment in the application description indicating it is stopped */
+alter application 'CashDtl' comment 'Cash-Stop';
+alter application 'CashDtl' disable startup;
+alter application 'CashDtl' disable commands;
+alter application 'CashDtl' disable updates;
+alter system unload application 'CashDtl';
+
+/* stop the Essbase server */
+alter system shutdown;
+logout;
+spool off;
+
+/* Recycle the Essbase OLAP Server (Svr) backup directories */
+
+/* rmdir /S /Q removes all files and the directory quietly - doesn't prompt to continue */
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu5 Svr_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu4 Svr_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu3 Svr_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu2 Svr_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_bu1 Svr_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC Svr_bu1";
+/* make a new current directory */
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC";
+
+/* Repeat the following for each App - DB as necessary - create the dirs first */
+
+/* Recycle the FPA (FPA_) backup directories */
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu5 FPA_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu4 FPA_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu3 FPA_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu2 FPA_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_bu1 FPA_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC FPA_bu1";
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC";
+
+
+/*  Copy Outline, Rules, Calc Scripts, Report Scripts, Excel Files, Text Files, Globals, and the Application Log for FPA - FPA */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.DB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.DBB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.ESM F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.TCT F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\fpa.IND F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.otl F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.rul F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.csc F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.rep F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.xls F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FPA\\*.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\*.*";
+shell "move D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\*.log F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\";
+shell "move D:\\Ent\\Hyperion\\Essbase\\App\\FPA_Exp.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FPA_bu\\FPA_buC\\";
+
+/* Recycle the FEE (FEE_) backup directories */
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu5 FEE_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu4 FEE_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu3 FEE_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu2 FEE_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_bu1 FEE_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC FEE_bu1";
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC";
+
+
+/*  Copy Outline, Rules, Calc Scripts, Report Scripts, Excel Files, Text Files, Globals, and the Application Log for FPA - FPA */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.DB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.DBB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.ESM F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.TCT F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\fees.IND F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.otl F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.rul F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.csc F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.rep F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.xls F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\FPA\\FEES\\*.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\*.*";
+shell "move D:\\Ent\\Hyperion\\Essbase\\App\\FEE_Exp.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\FEE_bu\\FEE_buC\\";
+
+/* Recycle the Cash (CAS_) backup directories */
+shell "rmdir /S /Q F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu6\\";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu5 CAS_bu6";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu4 CAS_bu5";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu3 CAS_bu4";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu2 CAS_bu3";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_bu1 CAS_bu2";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC CAS_bu1";
+shell "md F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC";
+
+/*  Copy Outline, Rules, Calc Scripts, Report Scripts, Excel Files, Text Files, Globals, and the Application Log for FPA - FPA */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.DB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.DBB F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.ESM F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.TCT F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\CashDtl.IND F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.otl F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.rul F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.csc F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.rep F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.xls F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\CashDtl\\*.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\*.*";
+shell "move D:\\Ent\\Hyperion\\Essbase\\App\\CashDtl\\*.log F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\";
+shell "move D:\\Ent\\Hyperion\\Essbase\\App\\CAS_Exp.txt F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\CAS_bu\\CAS_buC\\";
+
+/*  Copy the Server Security Files (.sec and .bak), Essbase Config file, and Server Log */
+shell "copy D:\\Ent\\Hyperion\\Essbase\\Bin\\*.sec F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\Bin\\*.bak F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\*.*";
+shell "copy D:\\Ent\\Hyperion\\Essbase\\Bin\\*.cfg F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\*.*";
+shell "move D:\\Ent\\Hyperion\\Essbase\\Essbase.log F:\\ent\\hyperion\\Essbackup\\HypData\\Backup\\Svr_bu\\Svr_buC\\";
+
+/* Recycle Startup Logs */
+shell "del F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart5.log MStart6.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart4.log MStart5.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart3.log MStart4.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart2.log MStart3.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStart1.log MStart2.log";
+shell "ren F:\\ent\\hyperion\\Essbackup\\HypData\\Logs\\MStart\\MStartC.log MStart1.log";
+
+/* Start the Essbase service - Note: Essbase must be installed as a service */
+shell "Net Start EssbaseService";
+
+/* Re login to the system */
+login $1 $2 on $3;
+
+/* output start up info to log */
+spool on to 'F:\Ent\Hyperion\EssBackup\HypData\Logs\MStart\MStartC.log';
+
+/* Re-enable connects and commands to FPA */
+alter application 'FPA' comment 'FPA-Start';
+alter application 'FPA' enable startup;
+alter application 'FPA' enable connects;
+alter application 'FPA' enable commands;
+alter application 'FPA' enable updates;
+alter application 'FPA' enable security;
+
+/* Re-enable connects and commands to Cash */
+alter application 'CashDtl' comment 'Cash-Start';
+alter application 'CashDtl' enable startup;
+alter application 'CashDtl' enable connects;
+alter application 'CashDtl' enable commands;
+alter application 'CashDtl' enable updates;
+alter application 'CashDtl' enable security;
+
+/* All done! */
+spool off;
+logout;
+exit;

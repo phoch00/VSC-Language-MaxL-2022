@@ -1,0 +1,11 @@
+Local Instructions
+
+Run vsce package - this creates the package and checks to make sure it works
+
+Run vsce login vscode-essbase
+
+Use this key
+
+l3ipxf7hw5drlv5iudfn4t3cd6vilwoyyoir33dggui2pb5kevjq
+
+Run vsce publish to publish extension to the marketplace
