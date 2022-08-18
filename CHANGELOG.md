@@ -21,3 +21,4 @@ Version Forked by Paul Hoch
 - Added snippets file
 - Arranged config files to point to the correct items, marketplace needs
 - Added logo image and config
+- Released to Marketplace
