@@ -2,8 +2,6 @@
 
 All notable changes to the "MaxL" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
 ## [Unreleased]
 
 - Initial release
@@ -22,3 +20,10 @@ Version Forked by Paul Hoch
 - Arranged config files to point to the correct items, marketplace needs
 - Added logo image and config
 - Released to Marketplace
+
+## 0.0.4
+20220822 v0.0.4
+- Bump version to 0.0.4
+- FIX copy/paste error from Calc Scripts. Updated all references to mxl vs csc
+- Added more code to testing script
+- Repackage and push to marketplace

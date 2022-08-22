@@ -3,7 +3,7 @@
     "publisher": "vscode-essbase",
     "displayName": "Essbase MaxL Language",
     "description": "Oracle Hyperion MaxL Language",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "repository": {
         "type": "git",
         "url": "https://github.com/phoch00/VSC-Language-MaxL-2022"

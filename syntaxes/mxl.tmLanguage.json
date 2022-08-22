@@ -23,11 +23,11 @@
 	"repository": {
         "comments": {
             "patterns": [{
-                    "name": "comment.block.empty.csc",
+                    "name": "comment.block.empty.mxl",
                     "match": "/\\*\\*/",
                     "captures": {
                         "0": {
-                            "name": "punctuation.definition.comment.csc"
+                            "name": "punctuation.definition.comment.mxl"
                         }
                     }
                 },
@@ -44,7 +44,7 @@
                     "match": "((//).*)$",
                     "captures": {
                         "1": {
-                            "name": "comment.line.double-slash.csc"
+                            "name": "comment.line.double-slash.mxl"
                         }
                     }
                 }
@@ -52,7 +52,7 @@
         },
         "comments-block": {
             "patterns": [{
-                "name": "comment.block.csc",
+                "name": "comment.block.mxl",
                 "begin": "/\\*",
                 "end": "\\*/",
                 "patterns": [{
@@ -62,11 +62,11 @@
         },
         "constants-and-special-vars": {
             "patterns": [{
-                    "name": "constant.language.csc",
+                    "name": "constant.language.mxl",
 					"match": "(?i)\\b(DIRECT|FORCE|AGGREGATE_MISSING|MINUTES|SECONDS|AGGREGATE_STORAGE|ANY|BITMAP|BUFFERED|CACHE_PINNING|WRITE|ZLIB|UNICODE_MODE|UNLIMITED|SINGLE|RUNTIME|RLE|READ|NONUNICODE_MODE|MULTIPLICATION|NEVER|NO_ACCESS|NONE|OPTIONAL|OPTIONAL_GROUP|META_READ|IMMEDIATE|COMMITTED_MODE|DEFINITION_ONLY|DAYS|DIVISION|FIXED_DECIMAL|SCIENTIFIC_NOTATION|SHELL)\\b"
                 },
                 {
-                    "name": "constant.numeric.csc",
+                    "name": "constant.numeric.mxl",
                     "match": "(?<=[^$])((0(x|X)[0-9a-fA-F]+)|([0-9]+(\\.[0-9]+)?))"
                 },
                 {
@@ -77,12 +77,12 @@
         },
         "function-identifier": {
             "patterns": [{
-                    "name": "entity.name.function.csc",
+                    "name": "entity.name.function.mxl",
 					"match": "(?i)\\b(ALTER|APPLICATION|DATABASE|GROUP|EXIT|OBJECT|PARTITION|SESSION|SYSTEM|TABLESPACE|TRIGGER|USER|CREATE|ALGORITHM|CALCULATION|FUNCTION|LOCATION|ALIAS|MACRO|OUTLINE|LEVEL|LONG|MEDIUM|SHORT|OBJECTS|DISPLAY|DISK|VOLUME|ROW|LOCK|PRIVILEGE|SPOOL|VARIABLE|DROP|EXECUTE|EXPORT|DATA|LRO|GRANT|IMPORT|DIMENSIONS|QUERY|LOGIN|REFRESH|CUSTOM|DEFINITIONS|REPLICATED|ABORT|ACTIVE|ADD|ADVANCED|AFTER|ALIAS_NAMES|ALIAS_TABLE|ALL|ALLOW|APPEND|APPLICATION|ARCHIVE|AREA|AS|AT|ATTRIBUTE|ATTRIBUTE_INFO|ATTRIBUTE_SPEC|ATTRIBUTE_TO_BASE_MEMBER_ASSOCIATION|AUTOSTARTUP|BEFORE|BEGIN|BLOCKS|CALC_SCRIPT|CALC_STRING|CASCADE|CLEAR|COLUMNS|COMMANDS|COMMENT|COMMITBLOCK|COMPRESSION|CONNECT|CONNECTS|COPY|CREATE_APPLICATION|CREATE_BLOCKS|CREATE_USER|CUBE_SIZE_INFO|CURRENCY|CURRENCY_CONVERSION|CURRENCY_DATABASE|CURRENCY_MEMBER|CURRENCY_RATE|DATA_BLOCK|DATA_CACHE_SIZE|DATA_FILE|DATA_FILE_CACHE_SIZE|DATABASE_SYNCH|DATABASE_ASYNCH|DBSTATS|DEFAULT|DELETE|DESIGNER|DIMENSION|DIRECTION|DIRECTORY|DISABLE|DISABLED|DISALLOW|DYNAMIC_CALC|ENABLE|ENABLED|END|END_TRANSACTION|ENFORCE|EQD|ERROR|ERROR_FILE|ESTIMATED|EVENT|EXCEL|EXCEEDS|EXPORT_DIRECTORY|EXTERNAL|FROM|FILE|FILE_SIZE|FILE_TYPE|FILTER_ACCESS|GB|GET|HA_TRACE|HELD|HIGH|HOSTNAME|IDENTIFIED|IMPLICIT_COMMIT|IN|INACTIVE_USER_DAYS|INDEX|INDEX_CACHE_SIZE|INDEX_DATA|INDEX_PAGE_SIZE|INFORMATION|INPUT|INSTEAD|INVALID_BLOCK_HEADERS|INVALID_LOGIN_LIMIT|IO_ACCESS_MODE|KB|KERNEL_IO|KERNEL_CACHE|KILL|LEVEL0|LICENSE_INFO|LINKED|LIST|LOAD|LOCAL|LOCK_TIMEOUT|LOGFILE|LOGOUT|LOTUS_2|LOTUS_3|LOTUS_4|LOW|MAPPED|MAX_LRO_FILE_SIZE|FOR|MB|MEMBER|MEMBER_INSTANCE_DATA|MEMBER_ALIAS_NAMESPACE|MEMBER_UDA|MEMBER_UDA_NAMESPACE|MEMBER_CALCULATION|MEMBER_COMMENT|MEMBER_FIXED_LENGTH_DATA|MEMBER_FORMULA|MEMBER_INFO|MEMBER_NAME_NAMESPACE|MEMBER_UDA|MEMBER_UDA_NAMESPACE|MEMBER_VARIABLE_LENGTH_DATA|MINIMUM|MINING|MODE|MODEL|NOTE|OF|OFF|ON|OPG_CACHE|OPG_STATE|OR|OUTLINE_PAGING_FILE|OVERVIEW|PARTITION_FILE|PARTITION_SIZE|PASSWORD|PASSWORD_RESET_DAYS|PERFORMANCE|PERMISSION|PERSISTENCE|PMML_FILE|PORTS|WHERE|THEN|MAIL|ELSE|PRESERVE|INPUT|LEVEL0|LOG_VALUE|PRE_IMAGE_ACCESS|PRESERVE|PROCESS|PROPERTY|PROTOCOL|RECOVER|REMOVE|RENAME|REPAIR|REPLACE|REPORT_FILE|REQUEST|REQUEST_HISTORY|RESET|RESTRUCTURE|RESULT|RETRIEVE_BUFFER_SIZE|RETRIEVE_SORT_BUFFER_SIZE|REVERSE|ROWS|SECURITY_FILE|RULES_FILE|SCOPE|SECURITY|SECURITY_BACKUP|SELECT|SELECTION|NONEMPTYBLOCK|SEMAPHORE|SERVER|SESSION_IDLE_LIMIT|SESSION_IDLE_POLL|SET|SHUTDOWN|SIZE|SPEC|SPINLOCK|STARTUP|STATISTICS|STATUS|STOP|STOPPING|SUPERVISOR|SUPPRESS|SYNC|TABLE|TASK|TB|TEMPLATE|TEXT|THREAD|TO|TOTAL_SIZE|TRANSPARENT|TRIGGER_SPOOL|TWO_PASS_CALC|TYPE|UNICODE|UNLOAD|UNLOCK|UPDATE|UPDATED|UPDATES|USE|USING|VALIDATE|VERIFICATION|VERSION|WHEN|WITH|WIZARD|WORKSHEET)\\b"
 
                 },
                 {
-                    "name": "entity.name.function.csc",
+                    "name": "entity.name.function.mxl",
                 	"match": "(?i)\\b(FILTER|PARENT|MEMBERS|IS|AGGREGATE|UDA|COLUMN_WIDTH|MESSAGE|FATAL|COLUMN_SEPARATOR|COLUMN_HEADER|ECHO_MODE|DML_OUTPUT|CELL_STATUS|NUMERICAL_DISPLAY|PRECISION)\\b"
                 }
 
@@ -93,23 +93,23 @@
 
             "patterns": [
                 {
-                    "name": "keyword.subvar.csc",
+                    "name": "keyword.subvar.mxl",
                     "match": "(\\&[a-zA-Z0-9_]+)"
                 },
                 {
-                    "name": "keyword.operator.comparison.csc",
+                    "name": "keyword.operator.comparison.mxl",
                     "match": "(==|!=|<=|<|>=|>)"
                 },
                 {
-                    "name": "keyword.operator.assignment.arithmetic.csc",
+                    "name": "keyword.operator.assignment.arithmetic.mxl",
                     "match": "(([+*/%-]|\\~)=)"
                 },
                 {
-                    "name": "keyword.operator.assignment.csc",
+                    "name": "keyword.operator.assignment.mxl",
                     "match": "(=)"
                 },
                 {
-                    "name": "keyword.operator.arithmetic.csc",
+                    "name": "keyword.operator.arithmetic.mxl",
                     "match": "(\\-|\\+|\\*|\\/|\\~\\/|%)"
                 }
             ]
@@ -120,16 +120,16 @@
                     "match": "(\\$[a-zA-Z0-9_]+)",
                     "captures": {
                         "1": {
-                            "name": "variable.parameter.csc"
+                            "name": "variable.parameter.mxl"
                         }
                     }
                 },
                 {
-                    "name": "string.interpolated.expression.csc",
+                    "name": "string.interpolated.expression.mxl",
                     "begin": "\\(",
                     "end": "\\)",
                     "patterns": [{
-                            "include": "#keyword.control.csc"
+                            "include": "#keyword.control.mxl"
                         },
 
                         {
@@ -140,23 +140,23 @@
                         },
                         {
                             "include": "#constants-and-special-vars",
-                            "name": "variable.parameter.csc"
+                            "name": "variable.parameter.mxl"
                         },
                         {
-                            "name": "variable.parameter.csc",
+                            "name": "variable.parameter.mxl",
                             "match": "(\\$[a-zA-Z0-9_]+)"
                         }
                     ]
                 },
                 {
-                    "name": "constant.character.escape.csc",
+                    "name": "constant.character.escape.mxl",
                     "match": "\\\\."
                 }
             ]
         },
         "strings": {
             "patterns": [{
-                    "name": "string.interpolated.triple.double.csc",
+                    "name": "string.interpolated.triple.double.mxl",
                     "begin": "(?<!r)\"\"\"",
                     "end": "\"\"\"(?!\")",
                     "patterns": [{
@@ -164,7 +164,7 @@
                     }]
                 },
                 {
-                    "name": "string.interpolated.triple.single.csc",
+                    "name": "string.interpolated.triple.single.mxl",
                     "begin": "(?<!r)'''",
                     "end": "'''(?!')",
                     "patterns": [{
@@ -172,17 +172,17 @@
                     }]
                 },
                 {
-                    "name": "string.quoted.triple.double.csc",
+                    "name": "string.quoted.triple.double.mxl",
                     "begin": "r\"\"\"",
                     "end": "\"\"\"(?!\")"
                 },
                 {
-                    "name": "string.quoted.triple.single.csc",
+                    "name": "string.quoted.triple.single.mxl",
                     "begin": "r'''",
                     "end": "'''(?!')"
                 },
                 {
-                    "name": "string.interpolated.double.csc",
+                    "name": "string.interpolated.double.mxl",
                     "begin": "(?<!\\|r)\"",
                     "end": "\"",
                     "patterns": [{
@@ -195,7 +195,7 @@
                     ]
                 },
                 {
-                    "name": "string.quoted.double.csc",
+                    "name": "string.quoted.double.mxl",
                     "begin": "r\"",
                     "end": "\"",
                     "patterns": [{
@@ -204,7 +204,7 @@
                     }]
                 },
                 {
-                    "name": "string.interpolated.single.csc",
+                    "name": "string.interpolated.single.mxl",
                     "begin": "(?<!\\|r)'",
                     "end": "'",
                     "patterns": [{
@@ -217,7 +217,7 @@
                     ]
                 },
                 {
-                    "name": "string.quoted.single.csc",
+                    "name": "string.quoted.single.mxl",
                     "begin": "r'",
                     "end": "'",
                     "patterns": [{
@@ -229,15 +229,15 @@
         },
         "punctuation": {
             "patterns": [{
-                    "name": "punctuation.comma.csc",
+                    "name": "punctuation.comma.mxl",
                     "match": ","
                 },
                 {
-                    "name": "punctuation.terminator.csc",
+                    "name": "punctuation.terminator.mxl",
                     "match": ";"
                 },
                 {
-                    "name": "punctuation.dot.csc",
+                    "name": "punctuation.dot.mxl",
                     "match": "\\."
                 }
 
